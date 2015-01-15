@@ -62,8 +62,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 				$this->title        = $this->settings['title'];
 				$this->description  = $this->settings['description'];
 
-				add_action('woocommerce_api_wc_gateway_coinvoy', array( $this, 'ipn_handler' ));
 				add_action( 'woocommerce_update_options_payment_gateways_coinvoy', array( $this, 'process_admin_options' ) );
+				add_action('woocommerce_api_coinvoy_gateway', array( $this, 'ipn_handler' ));
 			} 
 
 			public function init_form_fields() {
@@ -125,17 +125,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 				$options = array(
 					'orderID'  => ''.$order_id,
-					'callback' => urlencode(get_site_url() . '/wc-api/CALLBACK/'),
+					'callback' => WC()->api_request_url('Coinvoy_Gateway'),
 					'secret'   => $secret
 				);
 
-				//if ($this->settings['email'] != '') $options['email'] = $this->settings['email'];
+				if ($this->settings['email'] != '') $options['email'] = $this->settings['email'];
 
 				$payment = $coinvoy->payment($amount, $currency, $address, $options);
-                error_log(json_encode($payment));
                 
 				if (!$payment['success']) {
-					$order->add_order_note(__('Error while processing coinvoy payment: '. $payment['error'], 'coinvoy-woocommerce'));
+					$order->add_order_note(__('Error while processing coinvoy payment: '. $payment['message'], 'coinvoy-woocommerce'));
 					$woocommerce->add_error(__('Sorry, but there was an error processing your order. Please try again or try a different payment method.', 'coinvoy-woocommerce'));
 					return;
 				}
